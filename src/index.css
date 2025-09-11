@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Paleta de Cores Azul (Tema Claro) */
+    --background: 207 100% 97%; /* Azul muito claro, quase branco */
+    --foreground: 200 100% 20%; /* Azul muito escuro para texto */
+    
+    --card: 207 100% 94%; /* #b8e1ff um pouco mais claro */
+    --card-foreground: 200 100% 20%;
+    
+    --popover: 207 100% 94%;
+    --popover-foreground: 200 100% 20%;
+    
+    --primary: 200 100% 33%; /* #0071a6 */
+    --primary-foreground: 207 100% 95%; /* Texto claro para botões primários */
+    
+    --secondary: 203 73% 69%; /* #74beea */
+    --secondary-foreground: 200 100% 20%;
+    
+    --muted: 203 73% 85%;
+    --muted-foreground: 200 30% 40%;
+    
+    --accent: 203 73% 75%;
+    --accent-foreground: 200 100% 20%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 203 73% 80%;
+    --input: 203 73% 90%;
+    --ring: 200 100% 33%; /* #0071a6 */
+    
+    --radius: 1rem;
+  }
+
+  .dark {
+    /* Paleta de Cores Azul (Tema Escuro) */
+    --background: 200 100% 10%; /* Fundo azul bem escuro */
+    --foreground: 207 100% 95%; /* Texto azul bem claro */
+
+    --card: 200 100% 15%;
+    --card-foreground: 207 100% 95%;
+
+    --popover: 200 100% 15%;
+    --popover-foreground: 207 100% 95%;
+
+    --primary: 203 73% 69%; /* #74beea como cor primária no escuro */
+    --primary-foreground: 200 100% 10%;
+
+    --secondary: 200 100% 33%; /* #0071a6 como cor secundária */
+    --secondary-foreground: 207 100% 95%;
+
+    --muted: 200 100% 20%;
+    --muted-foreground: 207 100% 70%;
+
+    --accent: 200 100% 25%;
+    --accent-foreground: 207 100% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 200 100% 25%;
+    --input: 200 100% 20%;
+    --ring: 203 73% 69%; /* #74beea */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
