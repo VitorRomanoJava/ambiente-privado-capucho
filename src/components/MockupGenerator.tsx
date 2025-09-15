@@ -220,6 +220,9 @@ const MockupGenerator = () => {
   };
 
   // --- INÍCIO DA FUNÇÃO CORRIGIDA E FINALIZADA ---
+// ... (início do componente)
+
+  // --- INÍCIO DA FUNÇÃO ATUALIZADA COM SEU CÓDIGO ---
   const handleDownloadArt = useCallback(async () => {
     if (!uploadedImage && !customText) {
       toast({
@@ -242,58 +245,45 @@ const MockupGenerator = () => {
       return;
     }
 
-    const loadImage = (src: string): Promise<HTMLImageElement> => {
-      return new Promise((resolve, reject) => {
+    const loadImage = (src: string): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
         img.onerror = (err) => reject(err);
         img.src = src;
       });
-    };
 
     try {
+      // Ajusta canvas para o tamanho da imagem
       if (uploadedImage) {
         const img = await loadImage(uploadedImage);
         canvas.width = img.width;
         canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       } else {
         canvas.width = 1024;
         canvas.height = 1024;
       }
 
-// DENTRO DE handleDownloadArt
+      // --- TEXTO ---
+      if (customText) {
+        const fontFamily = textFont || 'sans-serif';
+        const fontSizePx = textSize; // tamanho direto em px
+        ctx.font = `${fontSizePx}px ${fontFamily}`;
+        ctx.fillStyle = textColor || '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-    if (customText) {
-      
-      const REFERENCE_WIDTH = 1000;
+        // posição central + offsets simples em pixels
+        const textX = canvas.width / 2 + (settings.textOffsetX || 0);
+        const textY = canvas.height / 2 + (settings.textOffsetY || 0);
 
-      const scaledSize = (textSize / REFERENCE_WIDTH) * canvas.width;
-      const finalSize = scaledSize ?? 32;
+        await document.fonts.load(ctx.font); // garante carregamento da fonte
+        ctx.fillText(customText, textX, textY);
+      }
 
-      const finalOffsetX = (settings.textOffsetX / REFERENCE_WIDTH) * canvas.width;
-      const finalOffsetY = (settings.textOffsetY / REFERENCE_WIDTH) * canvas.width; 
-
-
-      const finalFontFamily = textFont ?? 'sans-serif';
-      const finalColor = textColor ?? '#000000';
-      
-      const fontStyle = `${finalSize}px ${finalFontFamily}`;
-      
-      await document.fonts.load(fontStyle);
-      
-      ctx.font = fontStyle;
-      ctx.fillStyle = finalColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const textX = (canvas.width / 2) + finalOffsetX;
-      const textY = (canvas.height / 2) + finalOffsetY;
-      
-      ctx.fillText(customText, textX, textY);
-    }
-
+      // --- EXPORTAÇÃO ---
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement("a");
       link.href = dataUrl;
@@ -301,6 +291,7 @@ const MockupGenerator = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
       toast({ title: "Download da arte final iniciado!" });
 
     } catch (error) {
@@ -311,15 +302,10 @@ const MockupGenerator = () => {
         variant: "destructive",
       });
     }
-  }, [
-    customText,
-    textSize,
-    textFont,
-    textColor,
-    settings,
-    uploadedImage,
-    toast,
-  ]);
+  }, [customText, textSize, textFont, textColor, settings, uploadedImage, toast]);
+  // --- FIM DA FUNÇÃO ---
+
+// ... (resto do componente)
   // --- FIM DA FUNÇÃO CORRIGIDA E FINALIZADA ---
 
   const commonViewerProps = {

@@ -52,7 +52,7 @@ const Header = () => {
           
           {/* 2. NOME */}
           <h1 className="text-5xl font-bold font-heading tracking-tight mb-2">
-            Capucho
+            Capucho Brindes
           </h1>
 
           {/* 3. LOGOS */}
