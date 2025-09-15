@@ -1,5 +1,3 @@
-// src/components/layout/Footer.tsx
-
 const Footer = () => {
   return (
     <footer className="py-6 text-center">

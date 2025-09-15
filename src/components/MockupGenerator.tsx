@@ -1,7 +1,7 @@
 // Arquivo: src/components/MockupGenerator.tsx
-// Descrição: Versão atualizada para incluir a Caneca de Chopp 2D.
+// Descrição: Versão final corrigida para exportar a arte final (imagem + texto).
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -31,12 +31,12 @@ import { Azulejo2DViewer } from "@/components/2d/Azulejo2DViewer";
 import { Almofada2DViewer } from "@/components/2d/Almofada2DViewer";
 import { BabyBody2DViewer } from "@/components/2d/BabyBody2DViewer";
 import { Squeeze2DViewer } from "./2d/Squeeze2DViewer";
-import { ChoppMug2DViewer } from "@/components/2d/ChoppMug2DViewer"; // <-- ADICIONADO: Importação do novo visualizador
+import { ChoppMug2DViewer } from "@/components/2d/ChoppMug2DViewer";
 
 // Importação de todos os ícones necessários
 import {
   Download, Upload, Text, Palette, Wand2, RotateCw, Move3d, ArrowLeftRight, ArrowUpDown,
-  Shirt, Coffee, HardHat, Sparkles, Ruler, CupSoda, ChefHat, Square, BedDouble, Baby, GlassWater, Beer, CaseUpper, Type // <-- ADICIONADO: Ícones para texto
+  Shirt, Coffee, HardHat, Sparkles, Ruler, CupSoda, ChefHat, Square, BedDouble, Baby, GlassWater, Beer, CaseUpper, Type, ImageDown
 } from "lucide-react";
 
 
@@ -62,11 +62,11 @@ const availableProducts = [
   { id: "almofada", name: "Almofada", icon: BedDouble },
   { id: "babybody", name: "Body de Bebê", icon: Baby },
   { id: "squeeze", name: "Squeeze", icon: GlassWater },
-  { id: "chopp_mug", name: "Caneca de Chopp", icon: Beer }, // <-- ADICIONADO: Novo produto Caneca de Chopp
+  { id: "chopp_mug", name: "Caneca de Chopp", icon: Beer },
 ];
 
 const products3D = ['mug', 'xicara', 'tshirt', 'long_sleeve', 'cap'];
-const products2D = ['apron', 'azulejo', 'almofada', 'babybody', 'squeeze', 'chopp_mug']; // <-- ADICIONADO: "chopp_mug" à lista 2D
+const products2D = ['apron', 'azulejo', 'almofada', 'babybody', 'squeeze', 'chopp_mug'];
 
 type ProductSettings = {
   imageScaleX: number;
@@ -122,14 +122,13 @@ const productConfigurations: Record<string, ProductSettings> = {
     imageScaleX: 0.5, imageScaleY: 0.5, imageOffsetX: 0, imageOffsetY: -40, imageRotation: 0,
     textureOffsetX: 0, textScaleY: 1.0, textOffsetX: 0, textOffsetY: 0, textRotation: 0,
   },
-  chopp_mug: { // <-- ADICIONADO: Configuração para a Caneca de Chopp
+  chopp_mug: {
     imageScaleX: 0.45, imageScaleY: 0.45, imageOffsetX: 0, imageOffsetY: -30, imageRotation: 0,
     textureOffsetX: 0, textScaleY: 1.0, textOffsetX: 0, textOffsetY: 0, textRotation: 0,
   },
 };
 
 const MockupGenerator = () => {
-  // ... (nenhuma mudança no estado ou hooks)
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedProduct, setSelectedProduct] = useState(availableProducts[0].id);
@@ -149,7 +148,6 @@ const MockupGenerator = () => {
     setGlobalSizeMultiplier(1.0);
   }, [selectedProduct]);
 
-  // ... (nenhuma mudança nas funções handleSettingChange, handleImageUpload, handleDownload)
   const handleSettingChange = (key: keyof ProductSettings, value: number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
@@ -157,7 +155,7 @@ const MockupGenerator = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
         toast({ title: "Arquivo muito grande", description: "O arquivo deve ter no máximo 10MB", variant: "destructive" });
         return;
       }
@@ -202,24 +200,127 @@ const MockupGenerator = () => {
       const isMugLike = selectedProduct === 'mug' || selectedProduct === 'xicara';
       const canvasId = isMugLike ? 'mug-canvas' : 'product-canvas';
       let finalCanvasId = canvasId;
-      if(selectedProduct === 'xicara' && !document.getElementById(finalCanvasId)){
+      if (selectedProduct === 'xicara' && !document.getElementById(finalCanvasId)) {
         finalCanvasId = 'product-canvas';
       }
 
       const canvas = document.getElementById(finalCanvasId) as HTMLCanvasElement;
       if (canvas) {
-          try {
-              const dataUrl = canvas.toDataURL('image/png');
-              downloadImage(dataUrl);
-          } catch (error) {
-              console.error("Erro na exportação 3D:", error);
-              toast({ title: "Erro na Exportação", description: "Não foi possível gerar a imagem 3D.", variant: "destructive" });
-          }
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          downloadImage(dataUrl);
+        } catch (error) {
+          console.error("Erro na exportação 3D:", error);
+          toast({ title: "Erro na Exportação", description: "Não foi possível gerar a imagem 3D.", variant: "destructive" });
+        }
       } else {
         toast({ title: "Erro na Exportação", description: "Não foi possível encontrar o canvas 3D.", variant: "destructive" });
       }
     }
   };
+
+  // --- INÍCIO DA FUNÇÃO CORRIGIDA E FINALIZADA ---
+  const handleDownloadArt = useCallback(async () => {
+    if (!uploadedImage && !customText) {
+      toast({
+        title: "Nenhuma arte para baixar",
+        description: "Por favor, faça o upload de uma imagem ou adicione um texto.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      toast({
+        title: "Erro ao criar arte",
+        description: "Não foi possível iniciar o contexto do canvas.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = (err) => reject(err);
+        img.src = src;
+      });
+    };
+
+    try {
+      if (uploadedImage) {
+        const img = await loadImage(uploadedImage);
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+      } else {
+        canvas.width = 1024;
+        canvas.height = 1024;
+      }
+
+// DENTRO DE handleDownloadArt
+
+    if (customText) {
+      
+      const REFERENCE_WIDTH = 1000;
+
+      const scaledSize = (textSize / REFERENCE_WIDTH) * canvas.width;
+      const finalSize = scaledSize ?? 32;
+
+      const finalOffsetX = (settings.textOffsetX / REFERENCE_WIDTH) * canvas.width;
+      const finalOffsetY = (settings.textOffsetY / REFERENCE_WIDTH) * canvas.width; 
+
+
+      const finalFontFamily = textFont ?? 'sans-serif';
+      const finalColor = textColor ?? '#000000';
+      
+      const fontStyle = `${finalSize}px ${finalFontFamily}`;
+      
+      await document.fonts.load(fontStyle);
+      
+      ctx.font = fontStyle;
+      ctx.fillStyle = finalColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const textX = (canvas.width / 2) + finalOffsetX;
+      const textY = (canvas.height / 2) + finalOffsetY;
+      
+      ctx.fillText(customText, textX, textY);
+    }
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `arte-final.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download da arte final iniciado!" });
+
+    } catch (error) {
+      console.error("Erro ao gerar a arte final:", error);
+      toast({
+        title: "Erro ao gerar a imagem",
+        description: "Não foi possível carregar a imagem para criar a arte final.",
+        variant: "destructive",
+      });
+    }
+  }, [
+    customText,
+    textSize,
+    textFont,
+    textColor,
+    settings,
+    uploadedImage,
+    toast,
+  ]);
+  // --- FIM DA FUNÇÃO CORRIGIDA E FINALIZADA ---
 
   const commonViewerProps = {
     productColor: productColor, uploadedImage: uploadedImage, customText: customText,
@@ -233,7 +334,6 @@ const MockupGenerator = () => {
 
   return (
     <section className="py-12 md:py-20 bg-gradient-subtle">
-       {/* ... (nenhuma mudança no JSX até a parte de renderização do visualizador) */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 md:mb-16">
           <div className="flex items-center justify-center space-x-2 mb-4">
@@ -320,7 +420,6 @@ const MockupGenerator = () => {
                     </Card>
                   )}
                 </TabsContent>
-                {/* INÍCIO DA SEÇÃO ADICIONADA */}
                 <TabsContent value="text" className="space-y-4 pt-4">
                   <Card>
                     <CardHeader><CardTitle>Adicionar Texto</CardTitle></CardHeader>
@@ -371,26 +470,25 @@ const MockupGenerator = () => {
                           max={300}
                           step={5}
                         />
-                      </div>                        
+                      </div>
                       <div className="space-y-2 pt-4 border-t border-muted">
-                          <Label className="flex justify-between">Posição Horizontal (X)<span>{settings.textOffsetX}px</span></Label>
-                          <Slider value={[settings.textOffsetX]} onValueChange={(v) => handleSettingChange('textOffsetX', v[0])} min={-1000} max={1000} step={1} />
+                        <Label className="flex justify-between">Posição Horizontal (X)<span>{settings.textOffsetX}px</span></Label>
+                        <Slider value={[settings.textOffsetX]} onValueChange={(v) => handleSettingChange('textOffsetX', v[0])} min={-1000} max={1000} step={1} />
                       </div>
                       <div className="space-y-2">
-                          <Label className="flex justify-between">Posição Vertical (Y)<span>{settings.textOffsetY}px</span></Label>
-                          <Slider value={[settings.textOffsetY]} onValueChange={(v) => handleSettingChange('textOffsetY', v[0])} min={-1000} max={1000} step={1} />
+                        <Label className="flex justify-between">Posição Vertical (Y)<span>{settings.textOffsetY}px</span></Label>
+                        <Slider value={[settings.textOffsetY]} onValueChange={(v) => handleSettingChange('textOffsetY', v[0])} min={-1000} max={1000} step={1} />
                       </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
-                {/* FIM DA SEÇÃO ADICIONADA */}
               </Tabs>
               <Card>
                 <CardHeader><CardTitle>Ajustes Gerais do Produto</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label className="flex justify-between items-center"><span className="flex items-center"><Move3d className="w-4 h-4 mr-2" /> Girar Arte (360°)</span><span>{(settings.textureOffsetX * 360).toFixed(0)}°</span></Label>
-                    <Slider value={[settings.textureOffsetX]} onValueChange={(v) => handleSettingChange('textureOffsetX', v[0])} min={0} max={1} step={0.01} disabled={!['mug', 'xicara'].includes(selectedProduct)}/>
+                    <Slider value={[settings.textureOffsetX]} onValueChange={(v) => handleSettingChange('textureOffsetX', v[0])} min={0} max={1} step={0.01} disabled={!['mug', 'xicara'].includes(selectedProduct)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center"><Palette className="w-4 h-4 mr-2" /> Cor Base do Produto</Label>
@@ -401,36 +499,42 @@ const MockupGenerator = () => {
               <Button size="lg" className="w-full btn-primary" onClick={handleDownload}>
                 <Download className="w-4 h-4 mr-2" /> Baixar Mockup PNG
               </Button>
+
+              {(uploadedImage || customText) && (
+                <Button size="lg" variant="secondary" className="w-full mt-2" onClick={handleDownloadArt}>
+                  <ImageDown className="w-4 h-4 mr-2" /> Baixar Arte PNG
+                </Button>
+              )}
             </div>
             <div className="lg:col-span-2">
               <Card className="h-full">
-                  <CardContent className="p-2 md:p-4 h-[60vh] lg:h-[70vh] relative bg-muted/30 rounded-lg">
-                    {products3D.includes(selectedProduct) ? (
-                      <>
-                        {selectedProduct === 'mug' && <Mug3DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'xicara' && <XicaraViewer {...commonViewerProps} />}
-                        {selectedProduct === 'tshirt' && <TshirtViewer {...commonViewerProps} />}
-                        {selectedProduct === 'long_sleeve' && <LongSleeveViewer {...commonViewerProps} />}
-                        {selectedProduct === 'cap' && <CapViewer {...commonViewerProps} />}
-                      </>
-                    ) : (
-                      <>
-                        {selectedProduct === 'apron' && <Apron2DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'azulejo' && <Azulejo2DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'almofada' && <Almofada2DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'babybody' && <BabyBody2DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'squeeze' && <Squeeze2DViewer {...commonViewerProps} />}
-                        {selectedProduct === 'chopp_mug' && <ChoppMug2DViewer {...commonViewerProps} />} 
-                      </>
-                    )}
-                    {!uploadedImage && !customText && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg text-center shadow-lg">
-                          <p className="text-muted-foreground font-medium">Faça upload de uma imagem ou adicione texto para começar.</p>
-                        </div>
+                <CardContent className="p-2 md:p-4 h-[60vh] lg:h-[70vh] relative bg-muted/30 rounded-lg">
+                  {products3D.includes(selectedProduct) ? (
+                    <>
+                      {selectedProduct === 'mug' && <Mug3DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'xicara' && <XicaraViewer {...commonViewerProps} />}
+                      {selectedProduct === 'tshirt' && <TshirtViewer {...commonViewerProps} />}
+                      {selectedProduct === 'long_sleeve' && <LongSleeveViewer {...commonViewerProps} />}
+                      {selectedProduct === 'cap' && <CapViewer {...commonViewerProps} />}
+                    </>
+                  ) : (
+                    <>
+                      {selectedProduct === 'apron' && <Apron2DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'azulejo' && <Azulejo2DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'almofada' && <Almofada2DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'babybody' && <BabyBody2DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'squeeze' && <Squeeze2DViewer {...commonViewerProps} />}
+                      {selectedProduct === 'chopp_mug' && <ChoppMug2DViewer {...commonViewerProps} />}
+                    </>
+                  )}
+                  {!uploadedImage && !customText && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg text-center shadow-lg">
+                        <p className="text-muted-foreground font-medium">Faça upload de uma imagem ou adicione texto para começar.</p>
                       </div>
-                    )}
-                  </CardContent>
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </div>
           </div>
