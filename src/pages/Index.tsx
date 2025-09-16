@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/header";
 import MockupGenerator from "@/components/MockupGenerator";
-import Footer from "@/components/layout/Footer"; // 1. Importar o Footer
+import Footer from "@/components/layout/Footer"; 
 import { ShoppingCart } from "lucide-react";
 
 const Index = () => {
